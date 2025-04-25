@@ -32,9 +32,21 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+      
+      # Artifact Repository için gerekli konfigürasyonu yapın
+      - name: Setup Artifact Registry
+        run: |
+          # Artifact Registry API'yi etkinleştir
+          gcloud services enable artifactregistry.googleapis.com
           
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
+          # Repository'nin varlığını kontrol et, yoksa oluştur
+          REPO_CHECK=$(gcloud artifacts repositories list --format="value(name)" | grep -c "hotel-images" || true)
+          if [ "$REPO_CHECK" -eq "0" ]; then
+            gcloud artifacts repositories create hotel-images --repository-format=docker --location=us --description="Hotel Docker Images"
+          fi
+          
+          # Artifact Registry kimlik doğrulaması
+          gcloud auth configure-docker us-docker.pkg.dev
         
       - name: Create env file
         run: |
@@ -61,7 +73,7 @@ jobs:
         run: |
           # Docker image oluştur ve push et
           HOTEL_ID=${{ matrix.hotel }}
-          IMAGE_NAME=gcr.io/${{ secrets.GCP_PROJECT_ID }}/hotel-api-$HOTEL_ID:${{ github.sha }}
+          IMAGE_NAME=us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hotel-images/hotel-api-$HOTEL_ID:${{ github.sha }}
           
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
@@ -69,7 +81,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           HOTEL_ID=${{ matrix.hotel }}
-          IMAGE_NAME=gcr.io/${{ secrets.GCP_PROJECT_ID }}/hotel-api-$HOTEL_ID:${{ github.sha }}
+          IMAGE_NAME=us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hotel-images/hotel-api-$HOTEL_ID:${{ github.sha }}
           
           gcloud run deploy hotel-api-$HOTEL_ID \
             --image $IMAGE_NAME \
