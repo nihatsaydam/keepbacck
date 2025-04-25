@@ -1,0 +1,82 @@
+name: Deploy to Google Cloud
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "README.md"
+      - ".gitignore"
+      - "docs/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        # Buraya deploy etmek istediğiniz otel ID'lerini ekleyin
+        hotel: [hotel1, hotel2]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+          
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+        
+      - name: Create env file
+        run: |
+          # Her otel için farklı ortam değişkenleri oluştur
+          # Secrets'dan verileri al
+          if [ "${{ matrix.hotel }}" == "hotel1" ]; then
+            echo "HOTEL_ID=${{ matrix.hotel }}" > .env
+            echo "MONGODB_URI=${{ secrets.HOTEL1_MONGODB_URI }}" >> .env
+            echo "SMTP_USER=${{ secrets.HOTEL1_SMTP_USER }}" >> .env
+            echo "SMTP_PASS=${{ secrets.HOTEL1_SMTP_PASS }}" >> .env
+            echo "NOTIFICATION_EMAILS=${{ secrets.HOTEL1_NOTIFICATION_EMAILS }}" >> .env
+          elif [ "${{ matrix.hotel }}" == "hotel2" ]; then
+            echo "HOTEL_ID=${{ matrix.hotel }}" > .env
+            echo "MONGODB_URI=${{ secrets.HOTEL2_MONGODB_URI }}" >> .env
+            echo "SMTP_USER=${{ secrets.HOTEL2_SMTP_USER }}" >> .env
+            echo "SMTP_PASS=${{ secrets.HOTEL2_SMTP_PASS }}" >> .env
+            echo "NOTIFICATION_EMAILS=${{ secrets.HOTEL2_NOTIFICATION_EMAILS }}" >> .env
+          else
+            echo "Unknown hotel ID: ${{ matrix.hotel }}"
+            exit 1
+          fi
+          
+      - name: Build and Push Docker image
+        run: |
+          # Docker image oluştur ve push et
+          HOTEL_ID=${{ matrix.hotel }}
+          IMAGE_NAME=gcr.io/${{ secrets.GCP_PROJECT_ID }}/hotel-api-$HOTEL_ID:${{ github.sha }}
+          
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
+          
+      - name: Deploy to Cloud Run
+        run: |
+          HOTEL_ID=${{ matrix.hotel }}
+          IMAGE_NAME=gcr.io/${{ secrets.GCP_PROJECT_ID }}/hotel-api-$HOTEL_ID:${{ github.sha }}
+          
+          gcloud run deploy hotel-api-$HOTEL_ID \
+            --image $IMAGE_NAME \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --cpu 1 \
+            --memory 512Mi \
+            --set-env-vars "HOTEL_ID=$HOTEL_ID" \
+            --update-secrets="MONGODB_URI=HOTEL${HOTEL_ID##hotel}_MONGODB_URI:latest,SMTP_USER=HOTEL${HOTEL_ID##hotel}_SMTP_USER:latest,SMTP_PASS=HOTEL${HOTEL_ID##hotel}_SMTP_PASS:latest,NOTIFICATION_EMAILS=HOTEL${HOTEL_ID##hotel}_NOTIFICATION_EMAILS:latest"
+            
+      - name: Output service URL
+        run: |
+          echo "Deployed service for ${{ matrix.hotel }} at: $(gcloud run services describe hotel-api-${{ matrix.hotel }} --platform managed --region us-central1 --format 'value(status.url)')" 
