@@ -33,19 +33,10 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
       
-      # Artifact Repository için gerekli konfigürasyonu yapın
-      - name: Setup Artifact Registry
+      # Docker kimlik doğrulamasını yapılandır
+      - name: Configure Docker
         run: |
-          # Artifact Registry API'yi etkinleştir
-          gcloud services enable artifactregistry.googleapis.com
-          
-          # Repository'nin varlığını kontrol et, yoksa oluştur
-          REPO_CHECK=$(gcloud artifacts repositories list --format="value(name)" | grep -c "hotel-images" || true)
-          if [ "$REPO_CHECK" -eq "0" ]; then
-            gcloud artifacts repositories create hotel-images --repository-format=docker --location=us --description="Hotel Docker Images"
-          fi
-          
-          # Artifact Registry kimlik doğrulaması
+          # Docker için Artifact Registry kimlik doğrulaması
           gcloud auth configure-docker us-docker.pkg.dev
         
       - name: Create env file
