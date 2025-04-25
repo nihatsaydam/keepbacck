@@ -37,7 +37,7 @@ jobs:
       - name: Configure Docker
         run: |
           # Docker için Artifact Registry kimlik doğrulaması
-          gcloud auth configure-docker us-docker.pkg.dev
+          gcloud auth configure-docker us-central1-docker.pkg.dev
         
       - name: Create env file
         run: |
@@ -64,7 +64,7 @@ jobs:
         run: |
           # Docker image oluştur ve push et
           HOTEL_ID=${{ matrix.hotel }}
-          IMAGE_NAME=us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hotel-images/hotel-api-$HOTEL_ID:${{ github.sha }}
+          IMAGE_NAME=us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hotel-apps/hotel-api-$HOTEL_ID:${{ github.sha }}
           
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
@@ -72,7 +72,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           HOTEL_ID=${{ matrix.hotel }}
-          IMAGE_NAME=us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hotel-images/hotel-api-$HOTEL_ID:${{ github.sha }}
+          IMAGE_NAME=us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hotel-apps/hotel-api-$HOTEL_ID:${{ github.sha }}
           
           gcloud run deploy hotel-api-$HOTEL_ID \
             --image $IMAGE_NAME \
