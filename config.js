@@ -4,7 +4,7 @@ require('dotenv').config();
 // Farklı oteller için farklı yapılandırma dosyaları
 const hotels = {
   hotel1: {
-    name: 'Hotel 54',
+    name: 'GreenP',
     mongodb: 'mongodb+srv://username1:password1@cluster.mongodb.net/Hotel54?retryWrites=true&w=majority',
     emails: 'info@hotel54.com,manager@hotel54.com',
     smtpUser: 'hotel54@gmail.com',
