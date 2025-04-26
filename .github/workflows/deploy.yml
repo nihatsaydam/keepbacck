@@ -82,7 +82,7 @@ jobs:
             --cpu 1 \
             --memory 512Mi \
             --set-env-vars "HOTEL_ID=$HOTEL_ID" \
-            --update-secrets="MONGODB_URI=HOTEL${HOTEL_ID##hotel}_MONGODB_URI:latest,SMTP_USER=HOTEL${HOTEL_ID##hotel}_SMTP_USER:latest,SMTP_PASS=HOTEL${HOTEL_ID##hotel}_SMTP_PASS:latest,NOTIFICATION_EMAILS=HOTEL${HOTEL_ID##hotel}_NOTIFICATION_EMAILS:latest"
+            --update-secrets="MONGODB_URI=HOTEL${HOTEL_ID##hotel}_MONGODB_URI:latest,SMTP_USER=HOTEL${HOTEL_ID##hotel}_SMTP_USER:latest,SMTP_PASS=HOTEL${HOTEL_ID##hotel}_SMTP_PASS:latest,NOTIFICATION_EMAILS=HOTEL${HOTEL_ID##hotel}_NOTIFICATION_EMAILS:latest,HOTEL_NAME=HOTEL${HOTEL_ID##hotel}_HOTEL_NAME:latest,EMAIL_FROM_NAME=HOTEL${HOTEL_ID##hotel}_EMAIL_FROM_NAME:latest"
             
       - name: Output service URL
         run: |
