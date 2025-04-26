@@ -8,14 +8,22 @@ const config = require('./config');
 const app = express();
 
 // MongoDB bağlantısı
-console.log('Trying to connect to MongoDB with URI:', config.mongodbUri ? 'URI exists' : 'URI is missing');
+const redactedUri = config.mongodbUri 
+  ? config.mongodbUri.replace(/mongodb\+srv:\/\/([^:]+):([^@]+)@/, 'mongodb+srv://****:****@')
+  : 'URI is missing';
+
+console.log('MongoDB URI (masked):', redactedUri);
 console.log('Hotel ID:', process.env.HOTEL_ID);
 console.log('Hotel Name:', process.env.HOTEL_NAME || 'Not set');
+console.log('Environment variables loaded:', Object.keys(process.env).filter(key => key.startsWith('HOTEL') || key === 'MONGODB_URI').join(', '));
 
 mongoose
   .connect(config.mongodbUri)
   .then(() => console.log(`Connected to MongoDB for ${config.hotel.name}!`))
-  .catch((err) => console.error('Error connecting to MongoDB:', err));
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err.message);
+    console.error('Error details:', err);
+  });
 
 // Middleware
 app.use(cors());
