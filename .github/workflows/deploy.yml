@@ -74,6 +74,7 @@ jobs:
           HOTEL_ID=${{ matrix.hotel }}
           IMAGE_NAME=us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/hotel-apps/hotel-api-$HOTEL_ID:${{ github.sha }}
           
+          # Secret Manager'dan tüm değerleri alacak şekilde deploy et
           gcloud run deploy hotel-api-$HOTEL_ID \
             --image $IMAGE_NAME \
             --platform managed \

@@ -8,6 +8,10 @@ const config = require('./config');
 const app = express();
 
 // MongoDB bağlantısı
+console.log('Trying to connect to MongoDB with URI:', config.mongodbUri ? 'URI exists' : 'URI is missing');
+console.log('Hotel ID:', process.env.HOTEL_ID);
+console.log('Hotel Name:', process.env.HOTEL_NAME || 'Not set');
+
 mongoose
   .connect(config.mongodbUri)
   .then(() => console.log(`Connected to MongoDB for ${config.hotel.name}!`))
